@@ -12,7 +12,7 @@ python3.10 -m venv myenv
 source myenv/bin/activate
 docker run --rm jrottenberg/ffmpeg:latest -version
 python3.10 -m pip install -r requirements.txt
-python3.10 ytreuploader.py ytreuploader_reupload.json
+python3.10 ytreuploader.py reupload.json
 ```
 
 ## 1. Create a Google Cloud Project
@@ -57,7 +57,7 @@ python3.10 ytreuploader.py ytreuploader_reupload.json
 2. Click **Create Credentials → OAuth client ID**.
 3. Choose **Desktop app** as the application type.
 4. Name it (e.g., `YouTubeUploaderDesktop`).
-5. Click **Download JSON** → this file is your `ytreuploader_client_secrets.json`.
+5. Click **Download JSON** → this file is your `client_secrets.json`.
 
 ---
 
@@ -65,7 +65,7 @@ python3.10 ytreuploader.py ytreuploader_reupload.json
 
 - Move the downloaded JSON into your project folder:
   ```bash
-  mv ~/Downloads/client_secret_*.json ytreuploader_client_secrets.json
+  mv ~/Downloads/client_secret_*.json client_secrets.json
   ```
 
 ```
