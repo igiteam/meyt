@@ -4,4 +4,4 @@ export NVM_DIR="$HOME/.nvm"
 export NODE_OPTIONS=--openssl-legacy-provider
 node -v
 npm -v
-netlify deploy --prod --site 477e05f1-14d3-4b2e-864d-0416eeda0064
+netlify deploy --prod --site 5067343a-125c-433b-8214-1b3e54846e4e
