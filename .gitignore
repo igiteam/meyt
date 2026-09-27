@@ -1,0 +1,9 @@
+# Secrets
+playlist_to_mp4_album/client_secrets.json
+
+# Python virtual environments
+playlist_to_mp4_album/venv/
+playlist_to_mp4_album/.venv/
+playlist_to_mp4_album/env/
+playlist_to_mp4_album/ENV/
+playlist_to_mp4_album/pythonenv/

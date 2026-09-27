@@ -1,0 +1,12 @@
+yt-dlp
+pydub
+soundfile 
+lameenc
+numpy
+audioread
+pillow
+requests
+beautifulsoup4
+tqdm
+google-auth-oauthlib
+google-api-python-client
