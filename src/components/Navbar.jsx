@@ -9,7 +9,7 @@ const Navbar = () => {
       <Link to="/" className="flex-shrink-0">
         <div className="flex text-2xl sm:text-3xl md:text-5xl cursor-pointer">
           <img
-            src="https://cdn.sdappnet.cloud/rtx/images/youtube-icon.png"
+            src="https://raw.githubusercontent.com/igiteam/meyt/refs/heads/main/youtube-icon.png"
             style={{ height: "28px", width: "auto" }}
             alt="YouTube Logo"
             className="sm:h-[32px] md:h-[36px]"
