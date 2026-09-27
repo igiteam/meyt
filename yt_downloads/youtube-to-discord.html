@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Webhook for YouTube Live Streams</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0 20px;
+            background-color: #f4f4f4;
+        }
+
+        h1,
+        h2 {
+            color: #333;
+        }
+
+        pre {
+            background: #272822;
+            color: #f8f8f2;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+
+        code {
+            color: #66d9ef;
+        }
+
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Set Up a Discord Webhook for YouTube Live Notifications</h1>
+    <p>Follow this step-by-step guide to create a Discord webhook that posts to your server whenever someone goes live
+        on a YouTube channel.</p>
+
+    <h2>1. Set Up a Discord Webhook</h2>
+    <ol>
+        <li>Go to your Discord server and select the desired channel.</li>
+        <li>Click the gear icon to open channel settings.</li>
+        <li>Under <strong>Integrations</strong>, create a new webhook.</li>
+        <li>Copy the webhook URL; you will use it later.</li>
+    </ol>
+
+    <h2>2. Get YouTube API Access</h2>
+    <ol>
+        <li>Go to the <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a>.</li>
+        <li>Create a new project or select an existing one.</li>
+        <li>Enable the <strong>YouTube Data API v3</strong> for the project.</li>
+        <li>Generate an API key:
+            <ul>
+                <li>Go to the <strong>Credentials</strong> page.</li>
+                <li>Click <strong>Create credentials</strong> and select <strong>API Key</strong>.</li>
+                <li>Copy the generated API key.</li>
+            </ul>
+        </li>
+    </ol>
+
+    <h2>3. Write the Monitoring Script</h2>
+    <p>Use the following Python script to monitor the YouTube channel and post a notification to Discord when a live
+        stream starts:</p>
+
+    <pre><code class="language-python">import requests
+import time
+
+# YouTube API key and channel ID
+YOUTUBE_API_KEY = 'YOUR_YOUTUBE_API_KEY'
+CHANNEL_ID = 'TARGET_CHANNEL_ID'
+
+# Discord webhook URL
+DISCORD_WEBHOOK_URL = 'YOUR_DISCORD_WEBHOOK_URL'
+
+def check_live_status():
+    url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&channelId={CHANNEL_ID}&type=video&eventType=live&key={YOUTUBE_API_KEY}"
+    response = requests.get(url)
+    data = response.json()
+
+    if 'items' in data and len(data['items']) > 0:
+        # Live video found
+        video_id = data['items'][0]['id']['videoId']
+        video_url = f"https://www.youtube.com/watch?v={video_id}"
+        return video_url
+    return None
+
+def post_to_discord(message):
+    payload = {"content": message}
+    headers = {"Content-Type": "application/json"}
+    response = requests.post(DISCORD_WEBHOOK_URL, json=payload, headers=headers)
+    return response.status_code
+
+if __name__ == "__main__":
+    already_notified = False
+
+    while True:
+        live_url = check_live_status()
+        if live_url and not already_notified:
+            message = f"🔴 **Live Now!**\n{live_url}"
+            status = post_to_discord(message)
+            if status == 204:  # Successful Discord webhook response
+                print("Notification sent.")
+                already_notified = True
+        elif not live_url:
+            already_notified = False  # Reset if no live stream is found
+
+        time.sleep(60)  # Check every minute</code></pre>
+
+    <h2>4. Run the Script</h2>
+    <ol>
+        <li>Save the script in a file, e.g., <code>youtube_to_discord.py</code>.</li>
+        <li>Install the required libraries:
+            <pre><code class="language-bash">pip install requests</code></pre>
+        </li>
+        <li>Run the script:
+            <pre><code class="language-bash">python youtube_to_discord.py</code></pre>
+        </li>
+    </ol>
+
+    <h2>5. Deploy for Continuous Monitoring</h2>
+    <p>To keep the script running continuously, consider:</p>
+    <ul>
+        <li>Using a <strong>cron job</strong> (Linux/macOS) or <strong>Task Scheduler</strong> (Windows).</li>
+        <li>Deploying it to a cloud service like AWS, Google Cloud, or Heroku.</li>
+    </ul>
+
+    <p>That's it! Now your Discord server will be notified whenever the YouTube channel goes live. 🎉</p>
+</body>
+
+</html>

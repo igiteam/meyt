@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download YouTube</title>
+    <!-- HTML Meta Tags -->
+    <meta name="author" content="Gabriel Majorsky">
+    <meta property="article:published_time" content="2024-05-30T10:00:00Z">
+    <meta name="description"
+        content="Download YouTube videos, get transcripts, and summarize the text with ease using our app. Perfect for content creators and researchers.">
+    <!-- Google / Search Engine Tags -->
+    <meta itemprop="name" content="YouTube Video Downloader & Transcript Summarizer">
+    <meta itemprop="description"
+        content="An app that allows you to download YouTube videos, obtain their transcripts, and get concise summaries of the text. Ideal for quick content analysis.">
+    <meta itemprop="image" content="URL_to_image_of_your_app_or_screenshot">
+    <!-- Additional SEO Keywords -->
+    <meta name="keywords"
+        content="YouTube downloader, video transcript, text summarizer, video summarization, content analysis">
+    <!-- Facebook Meta Tags -->
+    <meta property="og:title" content="YouTube Video Downloader & Transcript Summarizer">
+    <meta property="og:description"
+        content="Download and summarize YouTube videos effortlessly. Our app provides transcripts and concise summaries to help you quickly understand content.">
+    <meta property="og:image" content="URL_to_image_of_your_app_or_screenshot">
+    <meta property="og:url" content="URL_of_your_app_or_website">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="YouTube Tools">
+    <!-- Twitter Meta Tags -->
+    <meta name="twitter:title" content="YouTube Video Downloader & Transcript Summarizer">
+    <meta name="twitter:description"
+        content="Efficiently download YouTube videos, get transcripts, and summarize the content with our app. Ideal for fast content analysis.">
+    <meta name="twitter:image" content="URL_to_image_of_your_app_or_screenshot">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@yourtwitteraccount">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: top;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        #youtubeUrl {
+            width: 300px;
+            padding: 10px;
+            font-size: 16px;
+        }
+
+        #checkButton,
+        #downloadButton {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        #checkButton {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+
+        #downloadButton {
+            background-color: green;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+
+        #downloadButton:disabled {
+            background-color: lightgray;
+            color: darkgray;
+            cursor: not-allowed;
+        }
+
+        #loadingIndicator {
+            display: none;
+            margin-top: 20px;
+        }
+
+        #videoDetails {
+            margin: 20px;
+            text-align: left;
+        }
+
+        #videoPlayer {
+            margin: 20px auto;
+            max-width: 100%;
+            width: 400px;
+        }
+
+        #progress {
+            margin-top: 20px;
+            white-space: pre-wrap;
+            text-align: left;
+        }
+
+        #errorMessage {
+            color: red;
+        }
+
+        /* Style for JSON display */
+        #jsonDisplay {
+            margin: 20px;
+            text-align: left;
+            max-width: 100%;
+            width: 400px;
+        }
+
+        #jsonDisplay pre {
+            white-space: pre-wrap;
+            word-break: break-word;
+            text-align: left;
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        #transcriptTable {
+            width: 200%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            margin-left: -50%;
+        }
+
+        #transcriptTable th,
+        #transcriptTable td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        #transcriptTable th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>Download YouTube</h2>
+        <input type="text" id="youtubeUrl" placeholder="Paste YouTube URL">
+        <button id="checkButton">Check Link</button>
+        <p id="errorMessage"></p>
+        <div id="btns">
+            <button id="downloadButton" disabled>Download MP4</button>
+            <label>
+                <input type="checkbox" id="transcriptCheckbox" checked>
+                Transcript
+            </label>
+            <label>
+                <input type="checkbox" id="summarizeCheckbox" checked>
+                Summarize
+            </label>
+        </div>
+
+        <div id="loadingIndicator">Loading...</div>
+        <!-- Display fetched video details -->
+        <div id="videoDetails"></div>
+
+        <!-- Embed YouTube video -->
+        <div id="videoPlayer"></div>
+        <div id="links">
+            <a id="videoLink" href="#" target="_blank">Download Video</a><br>
+            <a id="transcriptLink" href="#" target="_blank">Download Transcript</a><br>
+            <a id="summaryLink" href="#" target="_blank">Download Summary</a>
+        </div>
+
+
+        <!-- File input elements -->
+        <input type="file" id="summaryFileInput" accept=".json" style="display: none;">
+        <input type="file" id="transcriptFileInput" accept=".json" style="display: none;">
+        <button id="loadSummaryButton">Load Summary JSON</button>
+        <button id="loadTranscriptButton">Load Transcript JSON</button>
+        <a href="https://platform.openai.com/api-keys" target="_blank">OpenAIKey</a>
+        <!-- JSON display areas -->
+        <div id="jsonDisplay">
+            <div id="summaryDisplay"></div>
+            <div id="transcriptDisplay"></div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function getYoutubeVideoId(url) {
+            // Ensure the URL is a string
+            if (typeof url !== 'string') {
+                console.error('Expected a string for URL but got:', typeof url);
+                return null;
+            }
+
+            // Regex to capture the YouTube video ID and ignore additional parameters
+            const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|.+\?v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})(?:[?&]|$)/;
+            const match = url.match(regex);
+            return match ? match[1] : null;
+        }
+
+
+        function cleanYoutubeUrl(url) {
+            // Regex to handle both youtube.com/watch and youtu.be URLs and remove parameters after the video ID
+            const regex = /(https?:\/\/(?:www\.)?youtube\.com\/watch\?v=[a-zA-Z0-9_-]{11})(&.*)?|https?:\/\/youtu\.be\/([a-zA-Z0-9_-]{11})/;
+            const match = url.match(regex);
+
+            if (match) {
+                // Return the base URL with the video ID only
+                if (match[3]) {
+                    return `https://youtu.be/${match[3]}`;
+                }
+                return match[1];
+            }
+            return url;
+        }
+
+
+        const ws = new WebSocket(`ws://${window.location.host}`);
+        ws.onmessage = (event) => {
+            const message = event.data;
+
+            if (message.includes('[download]')) {
+                // Extract download progress
+                const progressMatch = message.match(/(\d+(\.\d+)?)% of/);
+                if (progressMatch) {
+                    const progress = parseFloat(progressMatch[1]);
+                    $('#loadingIndicator').text(`Downloading files ${progress.toFixed(1)}/100%`);
+                }
+            }
+
+            if (message.includes('Not converting media file')) {
+                // Extract paths from message
+                const videoPathMatch = message.match(/Not converting media file "([^"]+)"/);
+                const transcriptPathMatch = message.match(/Transcript saved to "([^"]+)"/);
+                const summaryPathMatch = message.match(/Summary saved to "([^"]+)"/);
+
+                if (videoPathMatch && transcriptPathMatch && summaryPathMatch) {
+                    const videoPath = videoPathMatch[1];
+                    const transcriptPath = transcriptPathMatch[1];
+                    const summaryPath = summaryPathMatch[1];
+
+                    // Update links with the file paths
+                    $('#links').show();
+                    $('#videoLink').attr('href', `${videoPath}`).text(`${videoPath}`);
+                    $('#transcriptLink').attr('href', `${transcriptPath}`).text(`${transcriptPath}`);
+                    $('#summaryLink').attr('href', `${summaryPath}`).text(`${summaryPath}`);
+                }
+            }
+        };
+
+        $(document).ready(function () {
+            $('#links').hide();
+            $('#loadingIndicator').text(`Loading...`);
+            //checkbutton -> fetch oembed youtube data
+            $('#checkButton').click(function () {
+                const youtubeUrl = $('#youtubeUrl').val().trim();
+                const cleanedUrl = cleanYoutubeUrl(youtubeUrl);
+                $('#youtubeUrl').val(cleanedUrl);  // Update the input field with the cleaned URL
+                console.log('Cleaned URL:', cleanedUrl);  // Log the cleaned URL to the console
+                const videoId = getYoutubeVideoId(cleanedUrl);
+
+                if (videoId) {
+                    // Clear previous video details and player
+                    $('#videoDetails').empty();
+                    $('#videoPlayer').empty();
+
+                    // Fetch video details using YouTube oEmbed API
+                    fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(youtubeUrl)}&format=json`)
+                        .then(response => response.json())
+                        .then(data => {
+                            // Display video details
+                            $('#videoDetails').html(`
+                                <h3>${data.title}</h3>
+                                <p>Author: ${data.author_name}</p>
+                            `);
+
+                            // Calculate height based on aspect ratio (16:9 assumed)
+                            const width = $('#videoPlayer').width(); // Use container width
+                            const height = Math.ceil(width * (9 / 16));
+
+                            // Embed video player with adjusted width and height
+                            $('#videoPlayer').html(data.html.replace(/width="\d+"/, `width="${width}"`).replace(/height="\d+"/, `height="${height}"`));
+
+                            // Enable download button
+                            $('#errorMessage').text('');
+                            $('#downloadButton').prop('disabled', false);
+                        })
+                        .catch(error => {
+                            console.error('Error fetching oEmbed data:', error);
+                            $('#errorMessage').text('Error fetching video details.');
+                            $('#downloadButton').prop('disabled', true);
+                        });
+                } else {
+                    $('#errorMessage').text('Please paste a valid YouTube link.');
+                    $('#downloadButton').prop('disabled', true);
+                }
+            });
+
+            //download video data, transcript, summary text
+            $('#downloadButton').click(function () {
+                const youtubeUrl = $('#youtubeUrl').val().trim();
+                const videoId = getYoutubeVideoId(youtubeUrl);
+
+                if (!videoId) return;
+
+                $('#btns').hide();
+                $('#loadingIndicator').show();
+
+                // Send request to server to initiate download
+                $.ajax({
+                    method: 'POST',
+                    url: '/download',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ url: youtubeUrl }),
+                    success: function (response) {
+                        // Assuming the server responds with a download link
+                        if (response && response.downloadUrl) {
+                            $('#loadingIndicator').text(`Video and transcript downloaded.\n${response.downloadUrl}`);
+                            $('#links').show();
+                            // alert(`Success: Video and transcript downloaded.\n${response.downloadUrl}`);
+                        } else {
+                            // alert('Error: Unable to download video.');
+                            $('#errorMessage').text('Error: Unable to download video.');
+                        }
+                    },
+                    error: function () {
+                        alert('Error: Failed to communicate with the server.');
+                    },
+                    complete: function () {
+                        $('#loadingIndicator').hide();
+                        $('#btns').show();
+                    }
+                });
+            });
+
+            // Load summary JSON
+            $('#loadSummaryButton').click(function () {
+                $('#summaryFileInput').trigger('click');
+            });
+
+            $('#summaryFileInput').change(function (event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        try {
+                            const data = JSON.parse(e.target.result);
+                            $('#summaryDisplay').html(`<pre>${JSON.stringify(data.summary, null, 2)}</pre>`);
+                        } catch (err) {
+                            $('#summaryDisplay').html('<p>Error parsing summary JSON.</p>');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            });
+
+            // Load transcript JSON
+            $('#loadTranscriptButton').click(function () {
+                $('#transcriptFileInput').trigger('click');
+            });
+
+            $('#transcriptFileInput').change(function (event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        try {
+                            const data = JSON.parse(e.target.result);
+
+                            // Check if the data is an array of objects
+                            if (Array.isArray(data) && data.every(item => typeof item === 'object')) {
+                                let tableHtml = '<table id="transcriptTable"><tr><th>Text</th></tr>';
+                                // let tableHtml = '<table id="transcriptTable"><tr><th>Start</th><th>Duration</th><th>Text</th></tr>';
+                                data.forEach(entry => {
+                                    tableHtml += `<tr><td>${escapeHtml(entry.text)}</td></tr>`;
+                                    // tableHtml += `<tr><td>${escapeHtml(entry.start)}</td><td>${escapeHtml(entry.duration)}</td><td>${escapeHtml(entry.text)}</td></tr>`;
+                                });
+                                tableHtml += '</table>';
+                                $('#transcriptDisplay').html(tableHtml);
+                            } else {
+                                $('#transcriptDisplay').html('<p>Invalid data format. Expected an array of objects.</p>');
+                            }
+                        } catch (err) {
+                            $('#transcriptDisplay').html('<p>Error parsing transcript JSON.</p>');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            });
+
+            // Function to escape HTML characters
+            function escapeHtml(text) {
+                if (typeof text === 'number') {
+                    text = text.toString();
+                }
+                const map = {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                };
+                return text.replace(/[&<>"']/g, function (m) { return map[m]; });
+            }
+
+        });
+    </script>
+</body>
+
+</html>
