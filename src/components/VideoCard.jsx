@@ -7,7 +7,7 @@ const createEmbedUrl = (videoId) => {
     .replace(/\+/g, "-")
     .replace(/\//g, "_")
     .replace(/=+$/, "");
-  return `https://ytembedxyz.netlify.app?${code}`;
+  return `https://ytembed.macosxjs.com?${code}`;
 };
 
 // YouTube thumbnail quality options
